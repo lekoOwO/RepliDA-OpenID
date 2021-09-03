@@ -1,0 +1,18 @@
+{
+  "name": "replida-openid",
+  "version": "1.0.0",
+  "description": "This is the OpenID login module for RepliDA.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "jsonwebtoken": "^8.5.1",
+    "openid-client": "^4.7.5",
+    "session-file-store": "^1.5.0"
+  }
+}
