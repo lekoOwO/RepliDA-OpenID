@@ -1,5 +1,24 @@
 const config = require('../data/config');
 
+const fs = require("fs")
+const ADMIN_FILE_PATH = '../data/admin.txt';
+try {
+    if (!fs.existsSync(ADMIN_FILE_PATH)) {
+        fs.writeFileSync(ADMIN_FILE_PATH, '');
+    }
+  } catch(err) {
+    console.error(err)
+}
+async function isAdmin(email){
+    return new Promise((resolve, reject) => {
+        fs.readFile(ADMIN_FILE_PATH, {encoding: "utf8"}, (err, data) => {
+            if (err) return reject(err);
+
+            return resolve(data.split("\n").find(x => x.trim() === email));
+        })
+    })
+}
+
 const express = require('express');
 const app = express();
 
@@ -65,7 +84,7 @@ const jwt = require('jsonwebtoken');
 
         const {email, email_verified, name, picture, given_name} = tokenSet.claims()
         const data = {email, email_verified, name, picture, given_name};
-        data.isAdmin = true; // TODO: check if user is admin
+        data.isAdmin = await isAdmin(email);
 
         const token = jwt.sign(data, config.jwtSecret, { expiresIn: 20 });
     
