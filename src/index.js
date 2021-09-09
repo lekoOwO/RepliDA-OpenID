@@ -1,7 +1,7 @@
 const config = require('../data/config');
 
 const fs = require("fs")
-const ADMIN_FILE_PATH = '../data/admin.txt';
+const ADMIN_FILE_PATH = 'data/admin.txt';
 try {
     if (!fs.existsSync(ADMIN_FILE_PATH)) {
         fs.writeFileSync(ADMIN_FILE_PATH, '');
@@ -14,7 +14,7 @@ async function isAdmin(email){
         fs.readFile(ADMIN_FILE_PATH, {encoding: "utf8"}, (err, data) => {
             if (err) return reject(err);
 
-            return resolve(data.split("\n").find(x => x.trim() === email));
+            return resolve(!!data.split("\n").find(x => x.trim() === email));
         })
     })
 }
@@ -64,14 +64,18 @@ const jwt = require('jsonwebtoken');
             <html>
                 <head>
                     <script>
-                        fetch("/callback", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/x-www-form-urlencoded"
-                            },
-                            body: window.location.hash.slice(1),
-                            credentials: 'include'
-                        }).then(resp => resp.text()).then(document.write);
+                        (async() => {
+                            const resp = await fetch("/callback", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded"
+                                },
+                                body: window.location.hash.slice(1),
+                                credentials: 'include'
+                            });
+                            const data = await resp.text();
+                            document.write(data);
+                        })();
                     </script>
             </html>
         `)
