@@ -10,5 +10,6 @@ module.exports = {
     "target": "REPLIDA_LOGIN_PATH", // RepliDA's login path
     "sessionSecret": "YOUR_SESSION_SECRET",
     "jwtSecret": "THE_JWT_SECRET", // Should be the same as RepliDA's config.callbackJwtSecret
-    "port": 3011
+    "port": 3011,
+    "adminGroup": "pcta"
 }
