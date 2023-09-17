@@ -67,8 +67,8 @@ const jwt = require('jsonwebtoken');
         const params = client.callbackParams(req);
         const tokenSet = await client.callback(config.openIdCallbackUri, params, { nonce })
 
-        const {email, chinese_name: name, picture, groups} = tokenSet.claims()
-        const data = {email, name, picture, groups};
+        const {email, uid, chinese_name: name, picture, groups} = tokenSet.claims()
+        const data = {email, uid, name, picture, groups};
         data.isAdmin = data.groups.includes(config.adminGroup);
 
         const token = jwt.sign(data, config.jwtSecret, { expiresIn: 20 });
