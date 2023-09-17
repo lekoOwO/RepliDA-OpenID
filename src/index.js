@@ -30,58 +30,43 @@ const jwt = require('jsonwebtoken');
     const client = new issuer.Client(config.openIdMetadata);
 
     app.get("/login", async(req, res) => {
-        const nonce = generators.nonce();
-        req.session.nonce = nonce;
+        const codeVerifier = generators.codeVerifier();
+        req.session.codeVerifier = codeVerifier;
+
+        const codeChallenge = generators.codeChallenge(codeVerifier);
     
         const url = client.authorizationUrl({
-            ...config.openIdMetadata,
-            nonce,
+            scope: config.openIdScope,
+            code_challenge: codeChallenge,
+            code_challenge_method: 'S256'
         });
         res.redirect(url);
     })
-    
+
     app.get("/callback", async(req, res) => {
-        res.send(`
+        try {
+            const params = client.callbackParams(req);
+
+            const tokenSet = await client.oauthCallback(config.openIdMetadata.redirect_uri, params, { code_verifier: req.session.codeVerifier })
+
+            const {email, uid, chinese_name: name, picture, groups} = tokenSet.claims()
+            const data = {email, uid, name, picture, groups};
+            data.isAdmin = data.groups.includes(config.adminGroup);
+
+            const token = jwt.sign(data, config.jwtSecret, { expiresIn: 20 });
+        
+            res.send(`
             <html>
                 <head>
                     <script>
-                        (async() => {
-                            const resp = await fetch("/callback", {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/x-www-form-urlencoded"
-                                },
-                                body: window.location.hash.slice(1),
-                                credentials: 'include'
-                            });
-                            const data = await resp.text();
-                            document.write(data);
-                        })();
+                        window.location.href = "${config.target}?token=" + encodeURIComponent('${token}');
                     </script>
+                </head>
             </html>
-        `)
-    })
-
-    app.post("/callback", async(req, res) => {
-        const nonce = req.session.nonce;
-        const params = client.callbackParams(req);
-        const tokenSet = await client.callback(config.openIdCallbackUri, params, { nonce })
-
-        const {email, uid, chinese_name: name, picture, groups} = tokenSet.claims()
-        const data = {email, uid, name, picture, groups};
-        data.isAdmin = data.groups.includes(config.adminGroup);
-
-        const token = jwt.sign(data, config.jwtSecret, { expiresIn: 20 });
-    
-        res.send(`
-        <html>
-            <head>
-                <script>
-                    window.location.href = "${config.target}?token=" + encodeURIComponent('${token}');
-                </script>
-            </head>
-        </html>
-        `)
+            `)
+        } catch (e) {
+            res.sendStatus(500);
+        }
     })
 
     app.listen(config.port);
